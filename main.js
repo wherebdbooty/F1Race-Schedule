@@ -13,9 +13,9 @@ const now = new Date()
 let options = {
     width: 175,
     font:{
-        header:	["Hiragino Sans-W7", 16],
-        title:	["Hiragino Sans-W7", 10],
-        body:	["Hiragino Sans-W6", 10]
+        header:	["HiraginoSans-W7", 16],
+        title:	["HiraginoSans-W7", 10],
+        body:	["HiraginoSans-W6", 10]
     },
     // Edit this for column resize
     padding:{
