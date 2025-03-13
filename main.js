@@ -21,7 +21,9 @@ let options = {
     padding:{
         left:	-2.5,
         right:	-7.5
-    }
+    },
+    spaceBetweenRows: 4,
+    spaceBetweenColumns: 0
 }
 
 function finished(time){	return time<now?.5:1	}
@@ -123,6 +125,8 @@ async function createWidget() {
 
 		  headerCell.addSpacer()
 
+	widget.addSpacer(4)
+
 	let body = widget.addStack()
 		//change: width,height (0 = auto size)
 		body.size = new Size(options.width,0)
@@ -138,6 +142,7 @@ async function createWidget() {
 		for(let row in dateTime[column]){
 			if(row=='raw') continue
 			let currentCell = currentColumn.addStack()
+				//left side spacer for Text
 				currentCell.addSpacer()
 			let cellText = currentCell.addText(dateTime[column][row])
 				//if row==0, use title font, else use body font
@@ -146,9 +151,13 @@ async function createWidget() {
 				cellText.lineLimit = 1
 				cellText.minimumScaleFactor = .2
 				cellText.textOpacity = finished(dateTime[column].raw)
+			//right side spacer for Text
 			currentCell.addSpacer()
+            //space between title, fp2, etc
+            currentColumn.addSpacer(options.spaceBetweenRows)
 		}
-		currentColumn.addSpacer(4)
+        //space bewtween columns
+		currentColumn.addSpacer(options.spaceBetweenColumns)
 	}
 
 	return widget;
