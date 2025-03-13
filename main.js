@@ -16,6 +16,11 @@ let options = {
         header:	new Font("Hiragino Sans W7", 16),
         title:	new Font("Hiragino Sans W7", 10),
         body:	new Font("Hiragino Sans W6", 10)
+    },
+    // Edit this for column resize
+    padding:{
+        left:	-2.5,
+        right:	-7.5
     }
 }
 
@@ -56,7 +61,7 @@ async function createWidget() {
 	const quali = race.Qualifying
 	const qualiDateTime = new Date(`${quali.date}T${quali.time}`)
 
-	let sprintQ, fp2sprintQDateTime, sprint, fp3sprintDateTime, fp2, fp3
+	let sprintQ, fp2sprintQDateTime, sprint, fp3sprintDateTime, fp2, fp3, sprintOrSP, isSprint = Object.hasOwn(race,'Sprint')
 
 	let dateTime = []
 		dateTime[0] = {
@@ -66,32 +71,28 @@ async function createWidget() {
 			time:	await formatSessionTime(fp1DateTime),
 			raw:	fp1DateTime
 		}
-		if(Object.hasOwn(race, "Sprint")) {
-			dateTime[1] = {title: 'SQ'}
-			sprintQ = race.SprintQualifying
-			fp2sprintQDateTime = new Date(`${sprintQ.date}T${sprintQ.time}`)
 
-			dateTime[2] = {title: 'SPR'}
-			sprint = race.Sprint
-			fp3sprintDateTime = new Date(`${sprint.date}T${sprint.time}`)
-		} else {
-			dateTime[1] = {title: 'FP2'}
-			fp2 = race.SecondPractice
-			fp2sprintQDateTime = new Date(`${fp2.date}T${fp2.time}`)
+		sprintOrSP = isSprint?race.SprintQualifying:race.SecondPractice
+		fp2sprintQDateTime = new Date(`${sprintOrSP.date}T${sprintOrSP.time}`)
 
-			dateTime[2] = {title: 'FP3'}
-			fp3 = race.ThirdPractice
-			fp3sprintDateTime = new Date(`${fp3.date}T${fp3.time}`)
+		dateTime[1] = {
+			title:	isSprint?'SQ':'FP2',
+			day:	await formatSessionDay(fp2sprintQDateTime),
+			date:	await formatSessionDate(fp2sprintQDateTime),
+			time:	await formatSessionTime(fp2sprintQDateTime),
+			raw:	fp2sprintQDateTime
 		}
-		dateTime[1].day = await formatSessionDay(fp2sprintQDateTime)
-		dateTime[1].date = await formatSessionDate(fp2sprintQDateTime)
-		dateTime[1].time = await formatSessionTime(fp2sprintQDateTime)
-		dateTime[1].raw = fp2sprintQDateTime
 
-		dateTime[2].day = await formatSessionDay(fp3sprintDateTime)
-		dateTime[2].date = await formatSessionDate(fp3sprintDateTime)
-		dateTime[2].time = await formatSessionTime(fp3sprintDateTime)
-		dateTime[2].raw = fp3sprintDateTime
+		sprintOrSP = isSprint?race.Sprint:race.ThirdPractice
+		fp3sprintDateTime = new Date(`${sprintOrSP.date}T${sprintOrSP.time}`)
+
+		dateTime[2]= {
+			title:	isSprint?'SPR':'FP3',
+			day:	await formatSessionDay(fp3sprintDateTime),
+			date:	await formatSessionDate(fp3sprintDateTime),
+			time:	await formatSessionTime(fp3sprintDateTime),
+			raw:	fp3sprintDateTime
+		}
 
 		dateTime[3] = {
 			title:	'Qual',
@@ -112,30 +113,28 @@ async function createWidget() {
 	const headerText = race.raceName.toUpperCase()
 	const headerCell = headerStack.addStack()
 		  //headerCell.backgroundColor = HEADER_COLOR
-          headerCell.size = new Size(options.width,0)
-          headerCell.addSpacer()
-      
+		  headerCell.size = new Size(options.width,0)
+		  headerCell.addSpacer()
+
 		  const textElement = headerCell.addText(headerText)
-          		textElement.font = options.font.header
-          		textElement.minimumScaleFactor = .1
-          		textElement.lineLimit = 1
+				textElement.font = options.font.header
+				textElement.minimumScaleFactor = .1
+				textElement.lineLimit = 1
 
-    	  headerCell.addSpacer()
+		  headerCell.addSpacer()
 
-    let body = widget.addStack()
+	let body = widget.addStack()
 		//change: width,height (0 = auto size)
 		body.size = new Size(options.width,0)
 		body.cornerRadius = 1
 
-	let maxColumns = 5
-
-	for(let column=0; column<maxColumns; column++){
+	for(let column=0; column<dateTime.length; column++){
 		let currentColumn = body.addStack()
 			currentColumn.layoutVertically()
-            
-            //adjust column padding
-            currentColumn.setPadding(0,-2.5,0,-7.5)
-            
+
+			//adjust column padding
+			currentColumn.setPadding(0,options.padding.left,0,options.padding.right)
+
 		for(let row in dateTime[column]){
 			if(row=='raw') continue
 			let currentCell = currentColumn.addStack()
@@ -152,5 +151,5 @@ async function createWidget() {
 		currentColumn.addSpacer(4)
 	}
 
-    return widget;
+	return widget;
 }
