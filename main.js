@@ -13,9 +13,9 @@ const now = new Date()
 let options = {
     width: 175,
     font:{
-        header:	new Font("Hiragino Sans W7", 16),
-        title:	new Font("Hiragino Sans W7", 10),
-        body:	new Font("Hiragino Sans W6", 10)
+        header:	["Hiragino Sans-W7", 16],
+        title:	["Hiragino Sans-W7", 10],
+        body:	["Hiragino Sans-W6", 10]
     },
     // Edit this for column resize
     padding:{
@@ -117,7 +117,7 @@ async function createWidget() {
 		  headerCell.addSpacer()
 
 		  const textElement = headerCell.addText(headerText)
-				textElement.font = options.font.header
+				textElement.font = new Font(...options.font.header)
 				textElement.minimumScaleFactor = .1
 				textElement.lineLimit = 1
 
@@ -141,7 +141,7 @@ async function createWidget() {
 				currentCell.addSpacer()
 			let cellText = currentCell.addText(dateTime[column][row])
 				//if row==0, use title font, else use body font
-				cellText.font = !row?options.font.title:options.font.body
+				cellText.font = row=='title'?new Font(...options.font.title):new Font(...options.font.body)
 				cellText.textColor = Color.white()
 				cellText.lineLimit = 1
 				cellText.minimumScaleFactor = .2
