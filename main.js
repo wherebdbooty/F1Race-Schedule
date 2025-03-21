@@ -21,6 +21,8 @@ let filePath=FM.documentsDirectory()+'/f1RaceData/schedule.txt'
 // const raceIdx = 6
 
 let options = {
+//version is User-Agent
+    version: "Scriptable: 1-hour (v4)",
     width: 170,
     font:{
         header:	["HiraginoSans-W7", 10],
@@ -68,7 +70,10 @@ async function getRaceData(){
 
 	//if time elapsed is 1+ hours, use API
 	console.log('calling API...')
-	temp = await new Request(dataUrl).loadJSON()
+	temp = new Request(dataUrl)
+	//added a header to show updated widget users
+	temp.headers = {"User-Agent":options.version}
+	temp = await temp.loadJSON()
 	cacheRaceData(temp)
 	return temp
 }
