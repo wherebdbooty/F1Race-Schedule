@@ -2,41 +2,75 @@
 // These must be at the very top of the file. Do not edit.
 // icon-color: red; icon-glyph: flag-checkered;
 
-// Citation and thank yous to the following:
-// Scriptable table setup modified from /u/wherebdbooty from this post on reddit: https://old.reddit.com/r/Scriptable/comments/121ewyg/working_with_stacks/jdnsl82/
+// Citation and thank yous:
 // F1 race data from the great project jolpica-f1, which took over where ergast left off. Check out that project here: https://github.com/jolpica/jolpica-f1
 
 const dataUrl = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const raceIdx = 0
 const now = new Date()
 
+//save cached data to 'Scriptable/f1RaceData/schedule.txt'
+let FM = FileManager.iCloud()
+if(!FM.fileExists(FM.documentsDirectory()+'/f1RaceData/'))
+	FM.createDirectory(FM.documentsDirectory()+'/f1RaceData/')
+let filePath=FM.documentsDirectory()+'/f1RaceData/schedule.txt'
+
+
+//// for testing// 
+// const dataUrl = "https://api.jolpi.ca/ergast/f1/current/races.json";// 
+// const raceIdx = 6
+
 let options = {
-    width: 175,
+    width: 170,
     font:{
-        header:	["HiraginoSans-W7", 16],
-        title:	["HiraginoSans-W7", 10],
-        body:	["HiraginoSans-W6", 10]
+        header:	["HiraginoSans-W7", 10],
+        title:	["HiraginoSans-W6", 9],
+        body:	["HiraginoSans-W4", 9]
     },
     // Edit this for column resize
     padding:{
-        left:	-2.5,
-        right:	-7.5
+        left:	-4,
+        right:	-4
     },
-    spaceBetweenRows: 4,
+    spaceBetweenRows: 2,
     spaceBetweenColumns: 0
 }
 
 function finished(time){	return time<now?.5:1	}
 
-//// for testing
-// const dataUrl = "https://api.jolpi.ca/ergast/f1/current/races.json";// 
-// const raceIdx = 4
-
 let widget = await createWidget();
 Script.setWidget(widget);
 //// for testing
-widget.presentMedium() //Small,Medium,Large,ExtraLarge   
+widget.presentAccessoryRectangular(); 
 Script.complete();
+
+//Cache data
+function cacheRaceData(dataObject){
+    console.log('caching new race data...')
+    dataObject.lastUpdate = now
+    FM.writeString(filePath, JSON.stringify(dataObject))
+}
+
+//API call limiter
+//uses getTime()/1000/60 to check if it's been 60 minutes since last update
+async function getRaceData(){
+	let temp
+	if(FM.fileExists(filePath)){
+		temp = FM.downloadFileFromiCloud(filePath)
+		temp = FM.readString(filePath)
+		temp = JSON.parse(temp)
+		//if time elapsed is 1 hour or more
+		if(Math.abs((new Date(temp.lastUpdate)).getTime()/1000/60 - now.getTime()/1000/60)<60){
+			console.log('using cached data...')
+			return temp
+		}
+	}
+
+	console.log('calling API...')
+	temp = await new Request(dataUrl).loadJSON()
+	cacheRaceData(temp)
+	return temp
+}
 
 async function formatSessionDay(sessionDay) {
     var options = { weekday: 'short' };
@@ -55,7 +89,7 @@ async function formatSessionTime(sessionTime) {
 
 async function createWidget() {
 	const widget = new ListWidget();
-	const data = await new Request(dataUrl).loadJSON();
+    const data = await getRaceData()	//await new Request(dataUrl).loadJSON();
 	const race = data.MRData.RaceTable.Races[raceIdx]
 	const raceDateTime = new Date(`${race.date}T${race.time}`)
 	const fp1 = race.FirstPractice
@@ -67,7 +101,7 @@ async function createWidget() {
 
 	let dateTime = []
 		dateTime[0] = {
-			title:	'FP1',
+			title: 'FP1',
 			day:	await formatSessionDay(fp1DateTime),
 			date:	await formatSessionDate(fp1DateTime),
 			time:	await formatSessionTime(fp1DateTime),
@@ -97,7 +131,7 @@ async function createWidget() {
 		}
 
 		dateTime[3] = {
-			title:	'Qual',
+			title:	'Quali',
 			day:	await formatSessionDay(qualiDateTime),
 			date:	await formatSessionDate(qualiDateTime),
 			time:	await formatSessionTime(qualiDateTime),
@@ -120,17 +154,17 @@ async function createWidget() {
 
 		  const textElement = headerCell.addText(headerText)
 				textElement.font = new Font(...options.font.header)
-				textElement.minimumScaleFactor = .1
+				textElement.minimumScaleFactor = 0.5
 				textElement.lineLimit = 1
 
 		  headerCell.addSpacer()
 
-	widget.addSpacer(4)
+	widget.addSpacer(options.spaceBetweenRows)
 
 	let body = widget.addStack()
 		//change: width,height (0 = auto size)
 		body.size = new Size(options.width,0)
-		body.cornerRadius = 1
+// 		body.cornerRadius = 1
 
 	for(let column=0; column<dateTime.length; column++){
 		let currentColumn = body.addStack()
@@ -147,9 +181,9 @@ async function createWidget() {
 			let cellText = currentCell.addText(dateTime[column][row])
 				//if row==0, use title font, else use body font
 				cellText.font = row=='title'?new Font(...options.font.title):new Font(...options.font.body)
-				cellText.textColor = Color.white()
+				// cellText.textColor = Color.white()
 				cellText.lineLimit = 1
-				cellText.minimumScaleFactor = .2
+				cellText.minimumScaleFactor = .5
 				cellText.textOpacity = finished(dateTime[column].raw)
 			//right side spacer for Text
 			currentCell.addSpacer()
