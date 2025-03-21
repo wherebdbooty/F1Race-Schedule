@@ -5,14 +5,32 @@
 // Citation and thank yous:
 // F1 race data from the great project jolpica-f1, which took over where ergast left off. Check out that project here: https://github.com/jolpica/jolpica-f1
 
-const dataUrl = "https://api.jolpi.ca/ergast/f1/current/next.json";
-const raceIdx = 0
 const now = new Date()
 
-//version 4.5 tries FileManager.iCloud()
-//if error, try FileManager.local()
+const options = {
+	//version is "User-Agent"
+	version: "Scriptable: F1RaceSchedule/5.0",
+	dataUrl: "https://api.jolpi.ca/ergast/f1/current/next.json",
+	raceIdx: 0,
+	width: 170,
+	font:{
+		header:	["HiraginoSans-W7", 10],
+		title:	["HiraginoSans-W6", 9],
+		body:	["HiraginoSans-W4", 9]
+	},
+	// Edit this for column resize
+	padding:{
+		left:	-4,
+		right:	-4
+	},
+	spaceBetweenRows: 2,
+	spaceBetweenColumns: 0,
+	//adjustable refresh time (less than 60 is ignored)
+	refreshLimitInMinutes: 60
+}
 
 //save cached data to 'Scriptable/f1RaceData/schedule.txt'
+
 let FM
 
 try { FM = FileManager.iCloud() }
@@ -26,26 +44,6 @@ let filePath=FM.documentsDirectory()+'/f1RaceData/schedule.txt'
 //// for testing// 
 // const dataUrl = "https://api.jolpi.ca/ergast/f1/current/races.json";// 
 // const raceIdx = 6
-
-let options = {
-	//version is "User-Agent"
-	version: "Scriptable: 1-hour (v4.5)",
-	//adjustable refresh time
-	refreshLimitInMinutes: 60,
-	width: 170,
-	font:{
-		header:	["HiraginoSans-W7", 10],
-		title:	["HiraginoSans-W6", 9],
-		body:	["HiraginoSans-W4", 9]
-	},
-	// Edit this for column resize
-	padding:{
-		left:	-4,
-		right:	-4
-	},
-	spaceBetweenRows: 2,
-	spaceBetweenColumns: 0
-}
 
 function finished(time){	return time<now?.5:1	}
 
@@ -72,14 +70,14 @@ async function getRaceData(){
 		temp = JSON.parse(temp)
 		//if time elapsed is less than 1 hour, use cache
 		if(Math.abs((new Date(temp.lastUpdate)).getTime()/1000/60 - now.getTime()/1000/60)<_rlim){
-			console.log('using cached data...')
+			//console.log('using cached data...')
 			return temp
 		}
 	}
 
 	//if time elapsed is 1+ hours, use API
-	console.log('calling API...')
-	temp = new Request(dataUrl)
+	//console.log('calling API...')
+	temp = new Request(options.dataUrl)
 	//added a header to show updated widget users
 	temp.headers = {"User-Agent":options.version}
 	temp = await temp.loadJSON()
@@ -104,8 +102,8 @@ async function formatSessionTime(sessionTime) {
 
 async function createWidget() {
 	const widget = new ListWidget();
-    const data = await getRaceData()	//await new Request(dataUrl).loadJSON();
-	const race = data.MRData.RaceTable.Races[raceIdx]
+    const data = await getRaceData()	//await new Request(options.dataUrl).loadJSON();
+	const race = data.MRData.RaceTable.Races[options.raceIdx]
 	const raceDateTime = new Date(`${race.date}T${race.time}`)
 	const fp1 = race.FirstPractice
 	const fp1DateTime = new Date(`${fp1.date}T${fp1.time}`)
