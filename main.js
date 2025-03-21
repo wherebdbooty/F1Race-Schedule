@@ -9,8 +9,10 @@ const dataUrl = "https://api.jolpi.ca/ergast/f1/current/next.json";
 const raceIdx = 0
 const now = new Date()
 
-//save cached data to 'Scriptable/f1RaceData/schedule.txt'
+//version 4.5 tries FileManager.iCloud()
+//if error, try FileManager.local()
 
+//save cached data to 'Scriptable/f1RaceData/schedule.txt'
 let FM
 
 try { FM = FileManager.iCloud() }
