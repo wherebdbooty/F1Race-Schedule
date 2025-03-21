@@ -59,13 +59,14 @@ async function getRaceData(){
 		temp = FM.downloadFileFromiCloud(filePath)
 		temp = FM.readString(filePath)
 		temp = JSON.parse(temp)
-		//if time elapsed is 1 hour or more
+		//if time elapsed is less than 1 hour, use cache
 		if(Math.abs((new Date(temp.lastUpdate)).getTime()/1000/60 - now.getTime()/1000/60)<60){
 			console.log('using cached data...')
 			return temp
 		}
 	}
 
+	//if time elapsed is 1+ hours, use API
 	console.log('calling API...')
 	temp = await new Request(dataUrl).loadJSON()
 	cacheRaceData(temp)
