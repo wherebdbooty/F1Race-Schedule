@@ -10,7 +10,12 @@ const raceIdx = 0
 const now = new Date()
 
 //save cached data to 'Scriptable/f1RaceData/schedule.txt'
-let FM = FileManager.iCloud()
+
+let FM
+
+try { FM = FileManager.iCloud() }
+catch {FM = FileManager.local()}
+
 if(!FM.fileExists(FM.documentsDirectory()+'/f1RaceData/'))
 	FM.createDirectory(FM.documentsDirectory()+'/f1RaceData/')
 let filePath=FM.documentsDirectory()+'/f1RaceData/schedule.txt'
@@ -21,21 +26,23 @@ let filePath=FM.documentsDirectory()+'/f1RaceData/schedule.txt'
 // const raceIdx = 6
 
 let options = {
-//version is User-Agent
-    version: "Scriptable: 1-hour (v4)",
-    width: 170,
-    font:{
-        header:	["HiraginoSans-W7", 10],
-        title:	["HiraginoSans-W6", 9],
-        body:	["HiraginoSans-W4", 9]
-    },
-    // Edit this for column resize
-    padding:{
-        left:	-4,
-        right:	-4
-    },
-    spaceBetweenRows: 2,
-    spaceBetweenColumns: 0
+	//version is "User-Agent"
+	version: "Scriptable: 1-hour (v4.5)",
+	//adjustable refresh time
+	refreshLimitInMinutes: 60,
+	width: 170,
+	font:{
+		header:	["HiraginoSans-W7", 10],
+		title:	["HiraginoSans-W6", 9],
+		body:	["HiraginoSans-W4", 9]
+	},
+	// Edit this for column resize
+	padding:{
+		left:	-4,
+		right:	-4
+	},
+	spaceBetweenRows: 2,
+	spaceBetweenColumns: 0
 }
 
 function finished(time){	return time<now?.5:1	}
@@ -54,15 +61,15 @@ function cacheRaceData(dataObject){
 }
 
 //API call limiter
-//uses getTime()/1000/60 to check if it's been 60 minutes since last update
+//uses getTime()/1000/60 to check if it's been at least 60 minutes since last update
 async function getRaceData(){
-	let temp
+	let temp, _rlim = options.refreshLimitInMinutes<60?60:options.refreshLimitInMinutes
 	if(FM.fileExists(filePath)){
 		temp = FM.downloadFileFromiCloud(filePath)
 		temp = FM.readString(filePath)
 		temp = JSON.parse(temp)
 		//if time elapsed is less than 1 hour, use cache
-		if(Math.abs((new Date(temp.lastUpdate)).getTime()/1000/60 - now.getTime()/1000/60)<60){
+		if(Math.abs((new Date(temp.lastUpdate)).getTime()/1000/60 - now.getTime()/1000/60)<_rlim){
 			console.log('using cached data...')
 			return temp
 		}
